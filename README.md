@@ -10,3 +10,5 @@ Contributions of any sort are welcomed. I am a structural engineer, not a progra
 ## License
 Code is released under the MIT License. Please see the LICENSE.md file for general license information, contributors, authors, etc.
 
+## Symbology
+The code in this package uses the following symbols:
