@@ -7,7 +7,7 @@ const (
 )
 
 // initialize initializes the matrices for the system to be solved
-func initialize(m int, n int) ([]mat64.Matrix, error) {
+func initialize(m int, n int) ([]mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, error) {
 
 	if m == 0 {
 		panic("cannot solve system with zero members")
@@ -35,6 +35,7 @@ func initialize(m int, n int) ([]mat64.Matrix, error) {
 	V := mat64.NewDense(12*m, 1, nil)
 	//initialize the support reactions in global coordinates
 	R := mat64.NewDense(12*m, 1, nil)
+	return Ni, S, Pf, Q, Qfi, Ei, V, R, nil
 }
 
 // solve assembles the system
