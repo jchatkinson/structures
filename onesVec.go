@@ -1,6 +1,7 @@
 package structures
 
-func onesVec(m int) []float64 {
+// OnesVec creates an array of size m filled with ones
+func OnesVec(m int) []float64 {
 	var data []float64
 	for ii := 0; ii < m; ii++ {
 		data = append(data, 1)

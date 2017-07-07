@@ -1,10 +1,28 @@
 package structures
 
-import "github.com/gonum/matrix/mat64"
+import (
+	"fmt"
+	"reflect"
+
+	"github.com/gonum/matrix/mat64"
+)
 
 const (
 	solveAccuracy = 1E-6
 )
+
+// Structure type contains the necessary parameters for solving a structural problem
+type Structure struct {
+	M, N                                                int
+	Coord, Con, Re, Load, W, E, G, A, Iz, Iy, J, St, Be mat64.Matrix
+}
+
+// MSA = Matrix Structural Analysis
+type MSA interface {
+	Initialize() ([]mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, error)
+	Solve() (mat64.Matrix, mat64.Matrix, mat64.Matrix)
+	Display()
+}
 
 // initialize initializes the matrices for the system to be solved
 func initialize(m int, n int) ([]mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, error) {
@@ -38,17 +56,20 @@ func initialize(m int, n int) ([]mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64
 	return Ni, S, Pf, Q, Qfi, Ei, V, R, nil
 }
 
-// solve assembles the system
-func solve(m int, n int, coord mat64.Matrix, con mat64.Matrix, re mat64.Matrix, load mat64.Matrix, w mat64.Matrix, E []float64, G []float64, A []float64, Iz []float64, Iy []float64, J []float64, St mat64.Matrix, be []float64) (Q mat64.Matrix, V mat64.Matrix, R mat64.Matrix) {
-	initialize(m, n)
-
-	/*--Coordinate Transformation------------------------------------------------------------------*/
-	// var Hv mat64.Vector
-	// for i := 0; i < m; i++ {
-	// 	H := mat64.Col(nil, i, con)
-	// 	// Hv = mat64.NewVector()
-	// }
+// Solve assembles the system
+func (s Structure) Solve() (Q mat64.Matrix, V mat64.Matrix, R mat64.Matrix) {
 
 	/*--Return Results------------------------------------------------------------------*/
 	return Q, V, R
+}
+
+// Display prints out the structure info to the console
+func (s Structure) Display() {
+	sr := reflect.ValueOf(s).Elem()
+	typeOfT := sr.Type()
+	for i := 0; i < sr.NumField(); i++ {
+		f := sr.Field(i)
+		fmt.Printf("%d: %s %s = %v\n", i, typeOfT.Field(i).Name, f.Type(), f.Interface())
+		// fmt.Printf("Arg %v:\nm = %v\n\n", i, mat64.Formatted(f, mat64.Prefix("    "), mat64.Squeeze()))
+	}
 }
