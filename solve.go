@@ -15,61 +15,70 @@ const (
 type Structure struct {
 	M, N                                                int
 	Coord, Con, Re, Load, W, E, G, A, Iz, Iy, J, St, Be mat64.Matrix
+	S, Pf, Q, Qfi, Ei, V, R                             mat64.Matrix
+	Ni                                                  []mat64.Matrix
 }
 
-// MSA = Matrix Structural Analysis
+// MSA (Matrix Structural Analysis) interface with methods for solving strutural problems
 type MSA interface {
-	Initialize() ([]mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, error)
-	Solve() (mat64.Matrix, mat64.Matrix, mat64.Matrix)
+	Initialize()
+	Solve()
 	Display()
 }
 
-// initialize initializes the matrices for the system to be solved
-func initialize(m int, n int) ([]mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, mat64.Matrix, error) {
-
-	if m == 0 {
-		panic("cannot solve system with zero members")
-	}
-	if n < 2 {
-		panic("the system must have atleast two nodes defined")
-	}
+// Initialize sets up the structure s
+func (s Structure) Initialize() {
 
 	//initialize a 12x12 matrix for each member
-	var Ni []mat64.Matrix
-	for index := 0; index < m; index++ {
-		Ni[index] = mat64.NewDense(12, 12, nil)
+	s.Ni = make([]mat64.Matrix, s.M)
+	for index := 0; index < s.M; index++ {
+		s.Ni[index] = mat64.NewDense(12, 12, nil)
 	}
 	//initialize a 6n x 6n global stiffness matrix
-	S := mat64.NewDense(6*n, 6*n, nil)
+	s.S = mat64.NewDense(6*s.N, 6*s.N, nil)
 	//initialize a 6n x 1 matrix of fixed end forces in global coordinates
-	Pf := mat64.NewDense(6*n, 1, nil)
+	s.Pf = mat64.NewDense(6*s.N, 1, nil)
 	//initialize a 12m x 1 matrix of internal forces in local coordinates
-	Q := mat64.NewDense(12*m, 1, nil)
+	s.Q = mat64.NewDense(12, s.M, nil)
 	//initialize a 12m x 1 matrix of fixed end forces in local coordinates
-	Qfi := mat64.NewDense(12*m, 1, nil)
+	s.Qfi = mat64.NewDense(12, s.M, nil)
 	//initialize a 12 x m matrix of element code numbers (locations) in the global stiffness matrix
-	Ei := mat64.NewDense(12, m, nil)
+	s.Ei = mat64.NewDense(12, s.M, nil)
 	//initialize the deflections in global coordinates
-	V := mat64.NewDense(12*m, 1, nil)
+	s.V = mat64.NewDense(12*s.M, 1, nil)
 	//initialize the support reactions in global coordinates
-	R := mat64.NewDense(12*m, 1, nil)
-	return Ni, S, Pf, Q, Qfi, Ei, V, R, nil
+	s.R = mat64.NewDense(12*s.M, 1, nil)
 }
 
 // Solve assembles the system
-func (s Structure) Solve() (Q mat64.Matrix, V mat64.Matrix, R mat64.Matrix) {
+func (s Structure) Solve() {
+	fmt.Printf("Solving the system with %v nodes and %v elements...", s.N, s.M)
+	for i := 0; i < s.M; i++ {
+		//coordinate transformation
+		H := mat64.Col(nil, i, s.Con)
+		ni := H[0]
+		nj := H[1]
+		e := [6*H(1)-5 : 6*H(1), 6*H(2)-5:6*H(2)];
+		C.Clone(s.Coord)
+		c1.Clone()
+		c2 := mat64.Col(nil, int(H[2]), s.Coord)
+		C.Sub(c1, c2)
 
-	/*--Return Results------------------------------------------------------------------*/
-	return Q, V, R
+		//generate local stiffness matrix
+
+		//generate local fixed-end forces
+
+		//generate member releases
+
+		//assemble local into global matrix
+	}
 }
 
 // Display prints out the structure info to the console
 func (s Structure) Display() {
-	sr := reflect.ValueOf(s).Elem()
-	typeOfT := sr.Type()
+	sr := reflect.ValueOf(&s).Elem()
+	typeOfsr := sr.Type()
 	for i := 0; i < sr.NumField(); i++ {
-		f := sr.Field(i)
-		fmt.Printf("%d: %s %s = %v\n", i, typeOfT.Field(i).Name, f.Type(), f.Interface())
-		// fmt.Printf("Arg %v:\nm = %v\n\n", i, mat64.Formatted(f, mat64.Prefix("    "), mat64.Squeeze()))
+		fmt.Printf("%d: %s %s = %v\n", i, typeOfsr.Field(i).Name, sr.Field(i).Type(), sr.Field(i).Interface())
 	}
 }
