@@ -1,5 +1,8 @@
 package structures
 
+//
+//#include <MSA.h>
+import "C"
 import (
 	"fmt"
 	"reflect"
@@ -51,27 +54,35 @@ func (s Structure) Initialize() {
 }
 
 // Solve assembles the system
-func (s Structure) Solve() {
+func (s Structure) Solve() (mat64.Matrix, mat64.Matrix, mat64.Matrix) {
 	fmt.Printf("Solving the system with %v nodes and %v elements...", s.N, s.M)
-	for i := 0; i < s.M; i++ {
-		//coordinate transformation
-		H := mat64.Col(nil, i, s.Con)
-		ni := H[0]
-		nj := H[1]
-		e := [6*H(1)-5 : 6*H(1), 6*H(2)-5:6*H(2)];
-		C.Clone(s.Coord)
-		c1.Clone()
-		c2 := mat64.Col(nil, int(H[2]), s.Coord)
-		C.Sub(c1, c2)
+	//Call the C library "MSA" and utilize the compiled matlab function msa()
+	//MSA has the form:
+	Q, V, R := C.MSA(s.M, s.N, s.Con, s.Coord, s.be, s.A, s.Iy, s.Iz, s.G, s.J, s.E, s.w, s.St, s.Re, s.Load)
+	s.Q = mat64.Matrix(Q)
+	s.V = mat64.Matrix(V)
+	s.R = mat64.Matrix(R)
 
-		//generate local stiffness matrix
+	// for i := 0; i < s.M; i++ {
+	// 	//coordinate transformation
+	// 	H := mat64.Col(nil, i, s.Con)
+	// 	ni := H[0]
+	// 	nj := H[1]
+	// 	e := makeRange(int(6*H[1]-5), int(6*H[1]))
+	// 	e = append(e, makeRange(int(6*H[2]-5), int(6*H[2])))
+	// 	C.Clone(s.Coord)
+	// 	c1.Clone()
+	// 	c2 := mat64.Col(nil, int(H[2]), s.Coord)
+	// 	C.Sub(c1, c2)
 
-		//generate local fixed-end forces
+	// 	//generate local stiffness matrix
 
-		//generate member releases
+	// 	//generate local fixed-end forces
 
-		//assemble local into global matrix
-	}
+	// 	//generate member releases
+
+	// 	//assemble local into global matrix
+	// }
 }
 
 // Display prints out the structure info to the console
