@@ -1,8 +1,5 @@
 package structures
 
-//
-//#include <MSA.h>
-import "C"
 import (
 	"fmt"
 	"reflect"
@@ -17,9 +14,9 @@ const (
 // Structure type contains the necessary parameters for solving a structural problem
 type Structure struct {
 	M, N                                                int
-	Coord, Con, Re, Load, W, E, G, A, Iz, Iy, J, St, Be mat64.Matrix
-	S, Pf, Q, Qfi, Ei, V, R                             mat64.Matrix
-	Ni                                                  []mat64.Matrix
+	Coord, Con, Re, Load, W, E, G, A, Iz, Iy, J, St, Be mat64.Dense
+	S, Pf, Q, Qfi, Ei, V, R                             *mat64.Dense
+	Ni                                                  []mat64.Dense
 }
 
 // MSA (Matrix Structural Analysis) interface with methods for solving strutural problems
@@ -33,10 +30,10 @@ type MSA interface {
 func (s Structure) Initialize() {
 
 	//initialize a 12x12 matrix for each member
-	s.Ni = make([]mat64.Matrix, s.M)
-	for index := 0; index < s.M; index++ {
-		s.Ni[index] = mat64.NewDense(12, 12, nil)
-	}
+	s.Ni = make([]mat64.Dense, s.M)
+	// for index := 0; index < s.M; index++ {
+	// 	s.Ni[index] = mat64.NewDense(12, 12, nil)
+	// }
 	//initialize a 6n x 6n global stiffness matrix
 	s.S = mat64.NewDense(6*s.N, 6*s.N, nil)
 	//initialize a 6n x 1 matrix of fixed end forces in global coordinates
@@ -54,14 +51,8 @@ func (s Structure) Initialize() {
 }
 
 // Solve assembles the system
-func (s Structure) Solve() (mat64.Matrix, mat64.Matrix, mat64.Matrix) {
+func (s Structure) Solve() {
 	fmt.Printf("Solving the system with %v nodes and %v elements...", s.N, s.M)
-	//Call the C library "MSA" and utilize the compiled matlab function msa()
-	//MSA has the form:
-	Q, V, R := C.MSA(s.M, s.N, s.Con, s.Coord, s.be, s.A, s.Iy, s.Iz, s.G, s.J, s.E, s.w, s.St, s.Re, s.Load)
-	s.Q = mat64.Matrix(Q)
-	s.V = mat64.Matrix(V)
-	s.R = mat64.Matrix(R)
 
 	// for i := 0; i < s.M; i++ {
 	// 	//coordinate transformation
@@ -83,6 +74,7 @@ func (s Structure) Solve() (mat64.Matrix, mat64.Matrix, mat64.Matrix) {
 
 	// 	//assemble local into global matrix
 	// }
+	return
 }
 
 // Display prints out the structure info to the console
@@ -92,4 +84,56 @@ func (s Structure) Display() {
 	for i := 0; i < sr.NumField(); i++ {
 		fmt.Printf("%d: %s %s = %v\n", i, typeOfsr.Field(i).Name, sr.Field(i).Type(), sr.Field(i).Interface())
 	}
+}
+
+func flatten(f [][]float64) (r, c int, d []float64) {
+	r = len(f)
+	if r == 0 {
+		panic("bad test: no row")
+	}
+	c = len(f[0])
+	d = make([]float64, 0, r*c)
+	for _, row := range f {
+		if len(row) != c {
+			panic("bad test: ragged input")
+		}
+		d = append(d, row...)
+	}
+	return r, c, d
+}
+
+func unflatten(r, c int, d []float64) [][]float64 {
+	m := make([][]float64, r)
+	for i := 0; i < r; i++ {
+		m[i] = d[i*c : (i+1)*c]
+	}
+	return m
+}
+
+// zeros returns a new zero matrix of size r x c
+func zeros(m, n int) *mat64.Dense {
+	d := make([]float64, m*n)
+	for i := 0; i < m*n; i++ {
+		d[i] = 0
+	}
+	return mat64.NewDense(m, n, d)
+}
+
+// ones initialize a matrix of ones of size m x n
+func ones(m, n int) *mat64.Dense {
+	mat := mat64.NewDense(m, n, nil)
+	row := OnesVec(n)
+	for ii := 0; ii < m; ii++ {
+		mat.SetRow(ii, *row)
+	}
+	return mat
+}
+
+// OnesVec creates an array of size m filled with ones
+func OnesVec(m int) *[]float64 {
+	var data []float64
+	for ii := 0; ii < m; ii++ {
+		data = append(data, 1)
+	}
+	return &data
 }
