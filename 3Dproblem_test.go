@@ -8,17 +8,16 @@ import (
 )
 
 func Test01(t *testing.T) {
-	//multiply two matrices
+	// Test01 shows how to multiply two matrices
 	a := zeros(2, 2)
 	b := ones(2, 2)
 	var c mat64.Dense
 	c.Mul(a, b)
 	fc := mat64.Formatted(&c, mat64.Prefix("    "), mat64.Squeeze())
 	fmt.Printf("Matrix:\na = %v\n\n", fc)
-
 }
 func Test02(t *testing.T) {
-	//insert elements into matrix
+	//Test02 shows how to insert elements into matrix
 	a := zeros(2, 2)
 	data := [][]float64{{1, 1}, {2, 2}}
 	rows, cols, _ := flatten(data)
@@ -29,26 +28,37 @@ func Test02(t *testing.T) {
 	}
 	fc := mat64.Formatted(a, mat64.Prefix("    "), mat64.Squeeze())
 	fmt.Printf("Matrix:\na = %v\n\n", fc)
-
+}
+func Test03(t *testing.T) {
+	// Test03 shows how to scale a matrix
+	a := ones(2, 2)
+	a.Scale(5, a)
+	fc := mat64.Formatted(a, mat64.Prefix("    "), mat64.Squeeze())
+	fmt.Printf("Matrix:\na = %v\n\n", fc)
 }
 
-func Test03(t *testing.T) {
-	//setup a simple 3d structure
+func TestA(t *testing.T) {
+	//TestA sets up a simple 3d structure and solves
 	var s01 Structure
 	s01.Initialize()
-	s01.M = 3
-	s01.N = 4
-	s01.Coord.Set(0, 1, -240.0)
-	s01.Coord.Set(1, 2, -240.0)
-	s01.Coord.Set(2, 3, -240.0)
-	s01.Con.SetRow(0, []float64{2, 3, 4})
-	s01.Con.SetRow(0, []float64{1, 1, 1})
-	s01.Con.SetRow(0, []float64{1, 1, 1})
-	s01.Con.SetRow(0, []float64{1, 1, 1})
+	m := 3
+	n := 4
+	coord := [][]float64{{0, -240, 0, 0}, {0, 0, -240, 0}, {0, 0, 0, -240}}
+	con := [][]float64{{2, 3, 4}, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}}
+	re := [][]float64{{0, 0, 0, 0, 0, 0}, {1, 1, 1, 1, 1, 1}, {1, 1, 1, 1, 1, 1}, {1, 1, 1, 1, 1, 1}}
+	load := [][]float64{{0, 0, 0, -1800, 0, 1800}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}}
+	w := [][]float64{{0, -0.25, 0}, {0, 0, 0}, {0, 0, 0}}
+	E := [][]float64{{29000}, {29000}, {29000}}
+	G := [][]float64{{11500}, {11500}, {11500}}
+	A := [][]float64{{32.9}, {32.9}, {32.9}}
+	Iz := [][]float64{{716}, {716}, {716}}
+	Iy := [][]float64{{236}, {236}, {236}}
+	J := [][]float64{{15.1}, {15.1}, {15.1}}
+	St := [][]float64{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}
+	be := [][]float64{{0}, {90 * 3.14159 / 180}, {30 * 3.14159 / 180}}
 
+	s01.Set(m, n, coord, con, re, load, w, E, G, A, Iz, Iy, J, St, be)
 	s01.Display()
-	s01.Solve()
-
 	//send it to the solver
 
 }

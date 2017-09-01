@@ -50,6 +50,25 @@ func (s Structure) Initialize() {
 	s.R = mat64.NewDense(12*s.M, 1, nil)
 }
 
+// Set will set the structure properties according to the function inputs
+func (s Structure) Set(m, n int, coord, con, re, load, w, E, G, A, Iz, Iy, J, St, be [][]float64) {
+	s.M = m
+	s.N = n
+	s.Coord = *mat64.NewDense(flatten(coord))
+	s.Con = *mat64.NewDense(flatten(con))
+	s.Re = *mat64.NewDense(flatten(re))
+	s.Load = *mat64.NewDense(flatten(load))
+	s.W = *mat64.NewDense(flatten(w))
+	s.E = *mat64.NewDense(flatten(E))
+	s.G = *mat64.NewDense(flatten(G))
+	s.A = *mat64.NewDense(flatten(A))
+	s.Iz = *mat64.NewDense(flatten(Iz))
+	s.Iy = *mat64.NewDense(flatten(Iy))
+	s.J = *mat64.NewDense(flatten(J))
+	s.St = *mat64.NewDense(flatten(St))
+	s.Be = *mat64.NewDense(flatten(be))
+}
+
 // Solve assembles the system
 func (s Structure) Solve() {
 	fmt.Printf("Solving the system with %v nodes and %v elements...", s.N, s.M)
@@ -89,13 +108,13 @@ func (s Structure) Display() {
 func flatten(f [][]float64) (r, c int, d []float64) {
 	r = len(f)
 	if r == 0 {
-		panic("bad test: no row")
+		panic("flatten: no row")
 	}
 	c = len(f[0])
 	d = make([]float64, 0, r*c)
 	for _, row := range f {
 		if len(row) != c {
-			panic("bad test: ragged input")
+			panic("flatten: ragged input")
 		}
 		d = append(d, row...)
 	}
