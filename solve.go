@@ -100,16 +100,30 @@ func (s Structure) Solve() {
 		var r *mat64.Dense
 		r.Mul(r1, r2)
 		r.Mul(r, r3) //r should be 3x3
-
-		I = eye(4)
-
+		T := Kronecker(eye(4), r)
 		//generate local stiffness matrix
 
+		co := mat64.NewDense(flatten([][]float64{{6 / L * 2 * L, 3 * 2 * L, 2 * L * 2 * L, L * 2 * L}}))
+		var y, z, K, K1n *mat64.Dense
+		x := s.A.At(i, 0) * L * L
+		y.Scale(s.Iy.At(i, 0), co)
+		z.Scale(s.Iz.At(i, 0), co)
+		g := s.G.At(i, 0) * s.J.At(i, 0) * L * L / s.E.At(i, 0)
+		K1 := Diag([]float64{x, z.At(0, 0), y.At(0, 0)})
+		K2 := mat64.NewDense(flatten([][]float64{{0, 0, 0}, {0, 0, z.At(1, 0)}, {0 - 1*y.At(1, 0), 0}}))
+		K3 := Diag([]float64{g, y.At(3, 0), z.At(3, 0)})
+		K4 := Diag([]float64{-g, y.At(3, 0), z.At(4, 0)})
+		K.Augment(K1, K2)
+		K1n.Scale(-1.0, K1)
+		K.Augment(K, K1n)
+		K.Augment(K, K2)
 		//generate local fixed-end forces
 
 		//generate member releases
 
 		//assemble local into global matrix
+		printmat(T, K3, K4)
+		printvars(float64(bj))
 	}
 	return
 }
@@ -166,6 +180,15 @@ func ones(m, n int) *mat64.Dense {
 	return mat
 }
 
+// eye initializes an identity matrix of size m x m
+func eye(n int) *mat64.Dense {
+	d := make([]float64, n*n)
+	for i := 0; i < n*n; i += n + 1 {
+		d[i] = 1
+	}
+	return mat64.NewDense(n, n, d)
+}
+
 // OnesVec creates an array of size m filled with ones
 func OnesVec(m int) *[]float64 {
 	var data []float64
@@ -173,6 +196,15 @@ func OnesVec(m int) *[]float64 {
 		data = append(data, 1)
 	}
 	return &data
+}
+
+// makeRange returns an incrementing array from min to max, of size max-min+1
+func makeRange(min, max int) []int {
+	a := make([]int, max-min+1)
+	for i := range a {
+		a[i] = min + i
+	}
+	return a
 }
 
 // cart2sph transforms cartesian coordinates to spherical coordinates
@@ -191,4 +223,55 @@ func Hypotenuse(x, y float64, z ...float64) float64 {
 		h = h + z[zz]*z[zz]
 	}
 	return math.Sqrt(h)
+}
+
+//SetMatrix Copies B into A, with B's 0, 0 aligning with A's i, j
+func SetMatrix(i, j int, A, B *mat64.Dense) *mat64.Dense {
+	br, bc := B.Dims()
+	for r := 0; r < br; r++ {
+		for c := 0; c < bc; c++ {
+			A.Set(i+r, j+c, B.At(r, c))
+		}
+	}
+	return A
+}
+
+// Kronecker product
+func Kronecker(A, B *mat64.Dense) (C *mat64.Dense) {
+	ars, acs := A.Dims()
+	brs, bcs := B.Dims()
+	C = zeros(ars*brs, acs*bcs)
+	for i := 0; i < ars; i++ {
+		for j := 0; j < acs; j++ {
+			Cij := C.Slice(i*brs, j*bcs, brs, bcs).(*mat64.Dense)
+			//Cij.SetMatrix(0, 0, Scaled(B, A.Get(i, j)))
+			sf := A.At(i, j)
+			var m *mat64.Dense
+			m.Scale(sf, B)
+			Cij = SetMatrix(0, 0, Cij, m)
+		}
+	}
+	return
+}
+
+// Diag creates a matrix with the inputs put along the diagonal and zeros elsewhere
+func Diag(a []float64) *mat64.Dense {
+	l := len(a)
+	m := zeros(l, l)
+	for ii := 0; ii < l; ii++ {
+		m.Set(ii, ii, a[ii])
+	}
+	return m
+}
+
+func printmat(m ...*mat64.Dense) {
+	for ii := 0; ii < len(m); ii++ {
+		f1 := mat64.Formatted(m[ii], mat64.Squeeze())
+		fmt.Printf("Matrix %v:\n%v\n", ii, f1)
+	}
+}
+func printvars(v ...float64) {
+	for ii := 0; ii < len(v); ii++ {
+		fmt.Printf("v[%v] = %v\n", ii, v[ii])
+	}
 }

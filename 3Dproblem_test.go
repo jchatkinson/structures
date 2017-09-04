@@ -1,41 +1,8 @@
 package structures
 
 import (
-	"fmt"
 	"testing"
-
-	"github.com/gonum/matrix/mat64"
 )
-
-func Test01(t *testing.T) {
-	// Test01 shows how to multiply two matrices
-	a := zeros(2, 2)
-	b := ones(2, 2)
-	var c mat64.Dense
-	c.Mul(a, b)
-	fc := mat64.Formatted(&c, mat64.Prefix("    "), mat64.Squeeze())
-	fmt.Printf("Matrix:\na = %v\n\n", fc)
-}
-func Test02(t *testing.T) {
-	//Test02 shows how to insert elements into matrix
-	a := zeros(2, 2)
-	data := [][]float64{{1, 1}, {2, 2}}
-	rows, cols, _ := flatten(data)
-	for r := 0; r < rows; r++ {
-		for c := 0; c < cols; c++ {
-			a.Set(r, c, data[r][c])
-		}
-	}
-	fc := mat64.Formatted(a, mat64.Prefix("    "), mat64.Squeeze())
-	fmt.Printf("Matrix:\na = %v\n\n", fc)
-}
-func Test03(t *testing.T) {
-	// Test03 shows how to scale a matrix
-	a := ones(2, 2)
-	a.Scale(5, a)
-	fc := mat64.Formatted(a, mat64.Prefix("    "), mat64.Squeeze())
-	fmt.Printf("Matrix:\na = %v\n\n", fc)
-}
 
 func TestA(t *testing.T) {
 	//TestA sets up a simple 3d structure and solves
