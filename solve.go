@@ -113,7 +113,8 @@ func (s Structure) Solve() {
 		K2 := mat64.NewDense(flatten([][]float64{{0, 0, 0}, {0, 0, z.At(1, 0)}, {0 - 1*y.At(1, 0), 0}}))
 		K3 := Diag([]float64{g, y.At(3, 0), z.At(3, 0)})
 		K4 := Diag([]float64{-g, y.At(3, 0), z.At(4, 0)})
-		K.Augment(K1, K2)
+		K = zeros(12, 12)
+		Ka := K.Slice(0, 3, 0, 3)
 		K1n.Scale(-1.0, K1)
 		K.Augment(K, K1n)
 		K.Augment(K, K2)
@@ -122,7 +123,7 @@ func (s Structure) Solve() {
 		//generate member releases
 
 		//assemble local into global matrix
-		printmat(T, K3, K4)
+		printmat(T, K3, K4, Ka)
 		printvars(float64(bj))
 	}
 	return

@@ -75,7 +75,5 @@ func TestAugment(t *testing.T) {
 	// var c := zeros(3, 6)
 	c := mat64.NewDense(3, 6, nil)
 	c.Augment(a, b)
-	c = c.Grow(0, 6).(*mat64.Dense)
-	c.Augment(c, a)
 	printmat(a, b, c)
 }
