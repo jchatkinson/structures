@@ -114,10 +114,13 @@ func (s Structure) Solve() {
 		K3 := Diag([]float64{g, y.At(3, 0), z.At(3, 0)})
 		K4 := Diag([]float64{-g, y.At(3, 0), z.At(4, 0)})
 		K = zeros(12, 12)
-		Ka := K.Slice(0, 3, 0, 3)
+		K1n = zeros(3, 3)
+		Ka := K.Slice(0, 3, 0, 3).(*mat64.Dense)
 		K1n.Scale(-1.0, K1)
 		K.Augment(K, K1n)
 		K.Augment(K, K2)
+
+		K.Scale(s.E.At(i, 0)/L/L/L, K)
 		//generate local fixed-end forces
 
 		//generate member releases
@@ -275,4 +278,14 @@ func printvars(v ...float64) {
 	for ii := 0; ii < len(v); ii++ {
 		fmt.Printf("v[%v] = %v\n", ii, v[ii])
 	}
+}
+
+//InsertMatrix will insert the elements of b into a, starting at point (i,j). If b does not fully align with a, InertMatrix will panic.
+func InsertMatrix(a, b *mat64.Dense, i, j int) *mat64.Dense {
+	ar, ac := a.Dims()
+	br, bc := b.Dims()
+	if i+br > ar || j+bc > ac {
+		panic(fmt.Errorf("InsertMatrix: Inserting b into a at [%v,%v] will put b beyond the range of a", i, j))
+	}
+
 }

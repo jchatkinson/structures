@@ -1,20 +1,25 @@
 package structures
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/gonum/matrix/mat64"
 )
 
 func Test01(t *testing.T) {
-	// Test01 shows how to multiply two matrices
-	a := zeros(2, 2)
-	b := ones(2, 2)
-	var c mat64.Dense
+	// Test01 shows how to multiply two matrices and scale a matrix
+	var a, b, c *mat64.Dense
+	a = ones(2, 2)
+	b = ones(2, 2)
+	c = zeros(2, 2)
+	a.Scale(5.0, a)
+	printmat(a, b)
 	c.Mul(a, b)
-	fc := mat64.Formatted(&c, mat64.Prefix("    "), mat64.Squeeze())
-	fmt.Printf("Matrix:\na = %v\n\n", fc)
+	printmat(a, b, c)
+	if c.At(0, 0) != 10 {
+		t.Error("C(0,0) != 10")
+	}
+
 }
 func Test02(t *testing.T) {
 	//Test02 shows how to insert elements into matrix
@@ -26,15 +31,13 @@ func Test02(t *testing.T) {
 			a.Set(r, c, data[r][c])
 		}
 	}
-	fc := mat64.Formatted(a, mat64.Prefix("    "), mat64.Squeeze())
-	fmt.Printf("Matrix:\na = %v\n\n", fc)
+	printmat(a)
 }
 func Test03(t *testing.T) {
 	// Test03 shows how to scale a matrix
 	a := ones(2, 2)
 	a.Scale(5, a)
-	fc := mat64.Formatted(a, mat64.Prefix("    "), mat64.Squeeze())
-	fmt.Printf("Matrix:\na = %v\n\n", fc)
+	printmat(a)
 }
 func TestMakeRange(t *testing.T) {
 	min := 0
@@ -57,12 +60,7 @@ func TestSlice(t *testing.T) {
 	//changes to the B matrix should be reflected in the A matrix
 	B.Set(0, 0, 100)
 	B.Set(1, 1, 100)
-	fc := mat64.Formatted(A, mat64.Prefix("    "), mat64.Squeeze())
-	fmt.Printf("Matrix A:\na = %v\n\n", fc)
-
-	fc = mat64.Formatted(B, mat64.Prefix("    "), mat64.Squeeze())
-	fmt.Printf("Matrix B:\na = %v\n\n", fc)
-
+	printmat(A, B)
 	if A.At(0, 0) != 100 {
 		t.Errorf("B != A")
 	}
@@ -76,4 +74,11 @@ func TestAugment(t *testing.T) {
 	c := mat64.NewDense(3, 6, nil)
 	c.Augment(a, b)
 	printmat(a, b, c)
+}
+
+func TestInsertMatrix(t *testing.T) {
+	//IntertMatrix
+	a := zeros(5, 5)
+	b := ones(2, 2)
+	a = InsertMatrix(a, b, 0, 0)
 }
