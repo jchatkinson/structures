@@ -1,7 +1,6 @@
 package structures
 
 import (
-	"fmt"
 	"testing"
 
 	"gonum.org/v1/gonum/mat"
@@ -11,7 +10,6 @@ import (
 func TestKronecker(t *testing.T) {
 	A := eye(4)
 	B := mat.NewDense(flatten([][]float64{{1, -1}, {-1, 1}}))
-
 	K := Kronecker(A, B)
 	// expected result is 8x8
 	expected := mat.NewDense(flatten([][]float64{
@@ -25,8 +23,7 @@ func TestKronecker(t *testing.T) {
 		{0, 0, 0, 0, 0, 0, -1, 1}}))
 
 	if K != expected {
-		fa := mat.Formatted(A, mat.Prefix("    "), mat.Squeeze())
-		fmt.Printf("A = %v\n\n", fa)
+		printmat(K, expected)
 		t.Fail()
 	}
 

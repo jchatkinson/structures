@@ -241,18 +241,14 @@ func SetMatrix(i, j int, A, B *mat.Dense) *mat.Dense {
 }
 
 // Kronecker product
-func Kronecker(A, B *mat.Dense) (C *mat.Dense) {
-	ars, acs := A.Dims()
-	brs, bcs := B.Dims()
-	C = zeros(ars*brs, acs*bcs)
-	for i := 0; i < ars; i++ {
-		for j := 0; j < acs; j++ {
-			Cij := C.Slice(i*brs, j*bcs, brs, bcs).(*mat.Dense)
-			//Cij.SetMatrix(0, 0, Scaled(B, A.Get(i, j)))
-			sf := A.At(i, j)
-			var m *mat.Dense
-			m.Scale(sf, B)
-			Cij = SetMatrix(0, 0, Cij, m)
+func Kronecker(a, b *mat.Dense) (k *mat.Dense) {
+	ar, ac := a.Dims()
+	br, bc := b.Dims()
+	k = mat.NewDense(ar*br, ac*bc, nil)
+	for i := 0; i < ar; i++ {
+		for j := 0; j < ac; j++ {
+			s := k.Slice(i*br, (i+1)*br, j*bc, (j+1)*bc).(*mat.Dense)
+			s.Scale(a.At(i, j), b)
 		}
 	}
 	return
