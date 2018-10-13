@@ -23,12 +23,13 @@ type Structure struct {
 // MSA (Matrix Structural Analysis) interface with methods for solving strutural problems
 type MSA interface {
 	Initialize()
+	Set()
 	Solve()
 	Display()
 }
 
 // Initialize sets up the structure s
-func (s Structure) Initialize() {
+func (s *Structure) Initialize() {
 	//initialize a 12x12 matrix for each member
 	for index := 0; index < s.M; index++ {
 		s.Ni[index] = zeros(12, 12)
@@ -49,8 +50,8 @@ func (s Structure) Initialize() {
 	s.R = mat.NewDense(12*s.M, 1, nil)
 }
 
-// Set will set the structure properties according to the function inputs
-func (s Structure) Set(m, n int, coord, con, re, load, w, E, G, A, Iz, Iy, J, St, be [][]float64) {
+// Set will set the structure properties according to the function inputs. It receives a pointer to s so we can modify it.
+func (s *Structure) Set(m, n int, coord, con, re, load, w, E, G, A, Iz, Iy, J, St, be [][]float64) {
 	s.M = m
 	s.N = n
 	s.Coord = mat.NewDense(flatten(coord))
@@ -69,7 +70,7 @@ func (s Structure) Set(m, n int, coord, con, re, load, w, E, G, A, Iz, Iy, J, St
 }
 
 // Solve assembles the system
-func (s Structure) Solve() {
+func (s *Structure) Solve() {
 	fmt.Printf("Solving the system with %v nodes and %v elements...", s.N, s.M)
 
 	for i := 0; i < s.M; i++ {

@@ -27,5 +27,6 @@ func TestA(t *testing.T) {
 	s01.Set(m, n, coord, con, re, load, w, E, G, A, Iz, Iy, J, St, be)
 	s01.Display()
 	//send it to the solver
+	s01.Solve()
 
 }
