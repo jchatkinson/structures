@@ -5,7 +5,7 @@ import (
 	"math"
 	"reflect"
 
-	"github.com/gonum/matrix/mat64"
+	"gonum.org/v1/gonum/mat"
 )
 
 const (
@@ -15,9 +15,9 @@ const (
 // Structure type contains the necessary parameters for solving a structural problem
 type Structure struct {
 	M, N                                                int
-	Coord, Con, Re, Load, W, E, G, A, Iz, Iy, J, St, Be *mat64.Dense
-	S, Pf, Q, Qfi, Ei, V, R                             *mat64.Dense
-	Ni                                                  []*mat64.Dense
+	Coord, Con, Re, Load, W, E, G, A, Iz, Iy, J, St, Be *mat.Dense
+	S, Pf, Q, Qfi, Ei, V, R                             *mat.Dense
+	Ni                                                  []*mat.Dense
 }
 
 // MSA (Matrix Structural Analysis) interface with methods for solving strutural problems
@@ -36,36 +36,36 @@ func (s Structure) Initialize() {
 	//initialize a 6n x 6n global stiffness matrix
 	s.S = zeros(6*s.N, 6*s.N)
 	//initialize a 6n x 1 matrix of fixed end forces in global coordinates
-	s.Pf = mat64.NewDense(6*s.N, 1, nil)
+	s.Pf = mat.NewDense(6*s.N, 1, nil)
 	//initialize a 12m x 1 matrix of internal forces in local coordinates
-	s.Q = mat64.NewDense(12, s.M, nil)
+	s.Q = mat.NewDense(12, s.M, nil)
 	//initialize a 12m x 1 matrix of fixed end forces in local coordinates
-	s.Qfi = mat64.NewDense(12, s.M, nil)
+	s.Qfi = mat.NewDense(12, s.M, nil)
 	//initialize a 12 x m matrix of element code numbers (locations) in the global stiffness matrix
-	s.Ei = mat64.NewDense(12, s.M, nil)
+	s.Ei = mat.NewDense(12, s.M, nil)
 	//initialize the deflections in global coordinates
-	s.V = mat64.NewDense(12*s.M, 1, nil)
+	s.V = mat.NewDense(12*s.M, 1, nil)
 	//initialize the support reactions in global coordinates
-	s.R = mat64.NewDense(12*s.M, 1, nil)
+	s.R = mat.NewDense(12*s.M, 1, nil)
 }
 
 // Set will set the structure properties according to the function inputs
 func (s Structure) Set(m, n int, coord, con, re, load, w, E, G, A, Iz, Iy, J, St, be [][]float64) {
 	s.M = m
 	s.N = n
-	s.Coord = mat64.NewDense(flatten(coord))
-	s.Con = mat64.NewDense(flatten(con))
-	s.Re = mat64.NewDense(flatten(re))
-	s.Load = mat64.NewDense(flatten(load))
-	s.W = mat64.NewDense(flatten(w))
-	s.E = mat64.NewDense(flatten(E))
-	s.G = mat64.NewDense(flatten(G))
-	s.A = mat64.NewDense(flatten(A))
-	s.Iz = mat64.NewDense(flatten(Iz))
-	s.Iy = mat64.NewDense(flatten(Iy))
-	s.J = mat64.NewDense(flatten(J))
-	s.St = mat64.NewDense(flatten(St))
-	s.Be = mat64.NewDense(flatten(be))
+	s.Coord = mat.NewDense(flatten(coord))
+	s.Con = mat.NewDense(flatten(con))
+	s.Re = mat.NewDense(flatten(re))
+	s.Load = mat.NewDense(flatten(load))
+	s.W = mat.NewDense(flatten(w))
+	s.E = mat.NewDense(flatten(E))
+	s.G = mat.NewDense(flatten(G))
+	s.A = mat.NewDense(flatten(A))
+	s.Iz = mat.NewDense(flatten(Iz))
+	s.Iy = mat.NewDense(flatten(Iy))
+	s.J = mat.NewDense(flatten(J))
+	s.St = mat.NewDense(flatten(St))
+	s.Be = mat.NewDense(flatten(be))
 }
 
 // Solve assembles the system
@@ -74,13 +74,13 @@ func (s Structure) Solve() {
 
 	for i := 0; i < s.M; i++ {
 		//coordinate transformation
-		H := mat64.Col(nil, i, s.Con)
+		H := mat.Col(nil, i, s.Con)
 		ni := int(H[0]) //node i
 		nj := int(H[1])
 		bi := int(H[2]) //boundary condition i
 		bj := int(H[3])
-		C1 := s.Coord.ColView(nj)
-		C2 := s.Coord.ColView(ni)
+		C1 := mat.VecDenseCopyOf(s.Coord.ColView(nj))
+		C2 := mat.VecDenseCopyOf(s.Coord.ColView(ni))
 		C1.SubVec(C1, C2)
 
 		e := makeRange(6*nj-5, 6*nj)
@@ -94,28 +94,28 @@ func (s Structure) Solve() {
 		cc := math.Cos(c)
 		sc := math.Sin(c)
 
-		r1 := mat64.NewDense(flatten([][]float64{{1, 0, 0}, {0, cc, sc}, {0, -sc, cc}}))
-		r2 := mat64.NewDense(flatten([][]float64{{cb, sb, 0}, {-sb, cb, 0}, {0, 0, 1}}))
-		r3 := mat64.NewDense(flatten([][]float64{{ca, 0, sa}, {0, 1, 0}, {-sa, 0, ca}}))
-		var r *mat64.Dense
+		r1 := mat.NewDense(flatten([][]float64{{1, 0, 0}, {0, cc, sc}, {0, -sc, cc}}))
+		r2 := mat.NewDense(flatten([][]float64{{cb, sb, 0}, {-sb, cb, 0}, {0, 0, 1}}))
+		r3 := mat.NewDense(flatten([][]float64{{ca, 0, sa}, {0, 1, 0}, {-sa, 0, ca}}))
+		var r *mat.Dense
 		r.Mul(r1, r2)
 		r.Mul(r, r3) //r should be 3x3
 		T := Kronecker(eye(4), r)
 		//generate local stiffness matrix
 
-		co := mat64.NewDense(flatten([][]float64{{6 / L * 2 * L, 3 * 2 * L, 2 * L * 2 * L, L * 2 * L}}))
-		var y, z, K, K1n *mat64.Dense
+		co := mat.NewDense(flatten([][]float64{{6 / L * 2 * L, 3 * 2 * L, 2 * L * 2 * L, L * 2 * L}}))
+		var y, z, K, K1n *mat.Dense
 		x := s.A.At(i, 0) * L * L
 		y.Scale(s.Iy.At(i, 0), co)
 		z.Scale(s.Iz.At(i, 0), co)
 		g := s.G.At(i, 0) * s.J.At(i, 0) * L * L / s.E.At(i, 0)
 		K1 := Diag([]float64{x, z.At(0, 0), y.At(0, 0)})
-		K2 := mat64.NewDense(flatten([][]float64{{0, 0, 0}, {0, 0, z.At(1, 0)}, {0 - 1*y.At(1, 0), 0}}))
+		K2 := mat.NewDense(flatten([][]float64{{0, 0, 0}, {0, 0, z.At(1, 0)}, {0 - 1*y.At(1, 0), 0}}))
 		K3 := Diag([]float64{g, y.At(3, 0), z.At(3, 0)})
 		K4 := Diag([]float64{-g, y.At(3, 0), z.At(4, 0)})
 		K = zeros(12, 12)
 		K1n = zeros(3, 3)
-		Ka := K.Slice(0, 3, 0, 3).(*mat64.Dense)
+		Ka := K.Slice(0, 3, 0, 3).(*mat.Dense)
 		K1n.Scale(-1.0, K1)
 		K.Augment(K, K1n)
 		K.Augment(K, K2)
@@ -166,17 +166,17 @@ func unflatten(r, c int, d []float64) [][]float64 {
 }
 
 // zeros returns a new zero matrix of size r x c
-func zeros(m, n int) *mat64.Dense {
+func zeros(m, n int) *mat.Dense {
 	d := make([]float64, m*n)
 	for i := 0; i < m*n; i++ {
 		d[i] = 0
 	}
-	return mat64.NewDense(m, n, d)
+	return mat.NewDense(m, n, d)
 }
 
 // ones initialize a matrix of ones of size m x n
-func ones(m, n int) *mat64.Dense {
-	mat := mat64.NewDense(m, n, nil)
+func ones(m, n int) *mat.Dense {
+	mat := mat.NewDense(m, n, nil)
 	row := OnesVec(n)
 	for ii := 0; ii < m; ii++ {
 		mat.SetRow(ii, *row)
@@ -185,12 +185,12 @@ func ones(m, n int) *mat64.Dense {
 }
 
 // eye initializes an identity matrix of size m x m
-func eye(n int) *mat64.Dense {
+func eye(n int) *mat.Dense {
 	d := make([]float64, n*n)
 	for i := 0; i < n*n; i += n + 1 {
 		d[i] = 1
 	}
-	return mat64.NewDense(n, n, d)
+	return mat.NewDense(n, n, d)
 }
 
 // OnesVec creates an array of size m filled with ones
@@ -230,7 +230,7 @@ func Hypotenuse(x, y float64, z ...float64) float64 {
 }
 
 //SetMatrix Copies B into A, with B's 0, 0 aligning with A's i, j
-func SetMatrix(i, j int, A, B *mat64.Dense) *mat64.Dense {
+func SetMatrix(i, j int, A, B *mat.Dense) *mat.Dense {
 	br, bc := B.Dims()
 	for r := 0; r < br; r++ {
 		for c := 0; c < bc; c++ {
@@ -241,25 +241,21 @@ func SetMatrix(i, j int, A, B *mat64.Dense) *mat64.Dense {
 }
 
 // Kronecker product
-func Kronecker(A, B *mat64.Dense) (C *mat64.Dense) {
-	ars, acs := A.Dims()
-	brs, bcs := B.Dims()
-	C = zeros(ars*brs, acs*bcs)
-	for i := 0; i < ars; i++ {
-		for j := 0; j < acs; j++ {
-			Cij := C.Slice(i*brs, j*bcs, brs, bcs).(*mat64.Dense)
-			//Cij.SetMatrix(0, 0, Scaled(B, A.Get(i, j)))
-			sf := A.At(i, j)
-			var m *mat64.Dense
-			m.Scale(sf, B)
-			Cij = SetMatrix(0, 0, Cij, m)
+func Kronecker(a, b *mat.Dense) (k *mat.Dense) {
+	ar, ac := a.Dims()
+	br, bc := b.Dims()
+	k = mat.NewDense(ar*br, ac*bc, nil)
+	for i := 0; i < ar; i++ {
+		for j := 0; j < ac; j++ {
+			s := k.Slice(i*br, (i+1)*br, j*bc, (j+1)*bc).(*mat.Dense)
+			s.Scale(a.At(i, j), b)
 		}
 	}
 	return
 }
 
 // Diag creates a matrix with the inputs put along the diagonal and zeros elsewhere
-func Diag(a []float64) *mat64.Dense {
+func Diag(a []float64) *mat.Dense {
 	l := len(a)
 	m := zeros(l, l)
 	for ii := 0; ii < l; ii++ {
@@ -268,9 +264,9 @@ func Diag(a []float64) *mat64.Dense {
 	return m
 }
 
-func printmat(m ...*mat64.Dense) {
+func printmat(m ...*mat.Dense) {
 	for ii := 0; ii < len(m); ii++ {
-		f1 := mat64.Formatted(m[ii], mat64.Squeeze())
+		f1 := mat.Formatted(m[ii], mat.Squeeze())
 		fmt.Printf("Matrix %v:\n%v\n", ii, f1)
 	}
 }
@@ -281,11 +277,10 @@ func printvars(v ...float64) {
 }
 
 //InsertMatrix will insert the elements of b into a, starting at point (i,j). If b does not fully align with a, InertMatrix will panic.
-func InsertMatrix(a, b *mat64.Dense, i, j int) *mat64.Dense {
-	ar, ac := a.Dims()
-	br, bc := b.Dims()
-	if i+br > ar || j+bc > ac {
-		panic(fmt.Errorf("InsertMatrix: Inserting b into a at [%v,%v] will put b beyond the range of a", i, j))
-	}
-
-}
+// func InsertMatrix(a, b *mat.Dense, i, j int) *mat.Dense {
+// 	ar, ac := a.Dims()
+// 	br, bc := b.Dims()
+// 	if i+br > ar || j+bc > ac {
+// 		panic(fmt.Errorf("InsertMatrix: Inserting b into a at [%v,%v] will put b beyond the range of a", i, j))
+// 	}
+// }

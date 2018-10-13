@@ -6,13 +6,13 @@ package structures
 import (
 	"testing"
 
-	"github.com/gonum/matrix/mat64"
+	"gonum.org/v1/gonum/mat"
 )
 
 // Test01 shows how to multiply two matrices and scale a matrix
 
 func Test01(t *testing.T) {
-	var a, b, c *mat64.Dense
+	var a, b, c *mat.Dense
 	a = ones(2, 2)
 	b = ones(2, 2)
 	c = zeros(2, 2)
@@ -46,7 +46,7 @@ func Test03(t *testing.T) {
 
 func TestSlice(t *testing.T) {
 	A := ones(3, 3)
-	B := A.Slice(0, 2, 0, 2).(*mat64.Dense)
+	B := A.Slice(0, 2, 0, 2).(*mat.Dense)
 	//changes to the B matrix should be reflected in the A matrix
 	B.Set(0, 0, 100)
 	B.Set(1, 1, 100)
@@ -61,7 +61,7 @@ func TestAugment(t *testing.T) {
 	a := ones(3, 3)
 	b := zeros(3, 3)
 	// var c := zeros(3, 6)
-	c := mat64.NewDense(3, 6, nil)
+	c := mat.NewDense(3, 6, nil)
 	c.Augment(a, b)
 	printmat(a, b, c)
 }
